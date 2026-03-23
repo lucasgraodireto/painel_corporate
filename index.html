@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+:root {
+  --bg:#0a0c0f;--bg2:#111318;--bg3:#181c23;
+  --border:#1e2530;--border2:#2a3340;
+  --text:#e2e8f0;--text2:#7d8fa3;--text3:#4a5568;
+  --red:#ff3b3b;--orange:#ff8c42;--yellow:#ffd166;
+  --green:#06d6a0;--blue:#67a22d;--accent:#67a22d;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;display:flex;flex-direction:column;}
+
+.header{flex-shrink:0;border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+.header h1{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;}
+.header-btns{display:flex;align-items:center;gap:8px;}
+#record-count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);}
+.hbtn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 12px;border-radius:2px;cursor:pointer;letter-spacing:.06em;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.hbtn:hover{border-color:var(--accent);color:var(--accent);}
+.hbtn.primary{border-color:var(--accent);color:var(--accent);}
+.file-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.file-meta-name{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-meta-date{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);}
+.phone-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;}
+.phone-modal-overlay.open{display:flex;}
+.phone-modal{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;padding:24px 28px;min-width:360px;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.6);}
+.phone-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.phone-modal-title{font-size:13px;font-weight:600;color:var(--text);}
+.phone-modal-close{background:transparent;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:2px;transition:color .15s;}
+.phone-modal-close:hover{color:var(--text);}
+.phone-list{display:flex;flex-direction:column;gap:6px;}
+.phone-item{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);padding:7px 10px;background:var(--bg3);border-radius:2px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.phone-copy{background:transparent;border:none;color:var(--text3);font-size:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;padding:2px 6px;border-radius:2px;transition:all .15s;}
+.phone-copy:hover{color:var(--accent);}
+.phones-btn{background:transparent;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;}
+.phones-btn:hover{color:var(--blue);}
+
+/* ── LOGIN ── */
+#login-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;width:380px;overflow:hidden;}
+.login-header{padding:28px 32px 20px;border-bottom:1px solid var(--border);}
+.login-header h2{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.login-header p{font-size:12px;color:var(--text3);}
+.login-body{padding:24px 32px 28px;display:flex;flex-direction:column;gap:16px;}
+.login-step{display:none;}
+.login-step.active{display:flex;flex-direction:column;gap:14px;}
+.login-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.04em;margin-bottom:4px;}
+.login-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:10px 14px;border-radius:3px;outline:none;width:100%;transition:border-color .15s;}
+.login-input:focus{border-color:var(--accent);}
+.login-input.code-input{font-family:'IBM Plex Mono',monospace;font-size:24px;letter-spacing:10px;text-align:center;}
+.login-btn{background:var(--accent);border:none;color:var(--bg);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:11px;border-radius:3px;cursor:pointer;width:100%;letter-spacing:.08em;transition:opacity .15s;}
+.login-btn:hover{opacity:.85;}
+.login-btn:disabled{opacity:.4;cursor:not-allowed;}
+.login-error{font-size:11px;color:var(--red);font-family:'IBM Plex Mono',monospace;min-height:16px;}
+.login-back{background:transparent;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;padding:0;transition:color .15s;align-self:center;}
+.login-back:hover{color:var(--text2);}
+.login-hint{font-size:11px;color:var(--text3);line-height:1.5;}
+.login-hint strong{color:var(--text2);}
+.login-email-display{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent);text-align:center;}
+.login-resend{background:transparent;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-decoration:underline;text-underline-offset:2px;transition:color .15s;align-self:center;}
+.login-resend:hover{color:var(--text2);}
+.hbtn.drive{border-color:#34a853;color:#34a853;}
+.hbtn.drive:hover{background:rgba(52,168,83,.08);}
+.hbtn.drive.loading{border-color:var(--text3);color:var(--text3);pointer-events:none;}
+.hbtn.drive.loading .drive-icon{animation:spin .8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:3px;padding:10px 18px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+.toast.error{border-color:var(--red);color:var(--red);}
+.toast.success{border-color:var(--green);color:var(--green);}
+
+#upload-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;display:none;}
+.upload-box{border:1px dashed var(--border2);border-radius:4px;padding:60px 80px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);width:480px;}
+.upload-box:hover,.upload-box.drag{border-color:var(--accent);background:rgba(103,162,45,.05);}
+.upload-icon{font-size:32px;margin-bottom:16px;opacity:.4;}
+.upload-box h2{font-size:14px;font-weight:600;margin-bottom:8px;}
+.upload-box p{font-size:12px;color:var(--text2);line-height:1.6;}
+.upload-box .hint{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:16px;}
+#file-input{display:none;}
+
+#main{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+.kpi-row{flex-shrink:0;display:grid;grid-template-columns:repeat(6,1fr);gap:1px;border-bottom:1px solid var(--border);background:var(--border);}
+.kpi{background:var(--bg2);padding:14px 18px;cursor:pointer;transition:background .15s;position:relative;}
+.kpi:hover{background:var(--bg3);}
+.kpi.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.kpi[data-p="1"].active::after{background:var(--red);}
+.kpi[data-p="2"].active::after{background:var(--orange);}
+.kpi[data-p="3"].active::after{background:var(--yellow);}
+.kpi[data-p="5"].active::after{background:var(--green);}
+.kpi[data-p="4"].active::after{background:var(--text3);}
+.kpi[data-p="all"].active::after{background:var(--accent);}
+.kpi-label{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:5px;}
+.kpi-value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;line-height:1;margin-bottom:3px;}
+.kpi-sub{font-size:11px;color:var(--text2);}
+.kpi[data-p="1"] .kpi-value{color:var(--red);}
+.kpi[data-p="2"] .kpi-value{color:var(--orange);}
+.kpi[data-p="3"] .kpi-value,.kpi[data-p="4"] .kpi-value{color:var(--yellow);}
+.kpi[data-p="5"] .kpi-value{color:var(--green);}
+.kpi[data-p="all"] .kpi-value{color:var(--accent);}
+
+.toolbar{flex-shrink:0;padding:10px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2);}
+.toolbar-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-right:4px;}
+select,input[type=text]{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:5px 10px;border-radius:3px;cursor:pointer;outline:none;}
+select:focus,input:focus{border-color:var(--accent);}
+input[type=text]{width:200px;}
+.btn-reset{background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:5px 12px;border-radius:3px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
+.btn-reset:hover{border-color:var(--text2);color:var(--text);}
+.sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
+
+.body-row{flex:1;display:grid;grid-template-columns:240px 1fr;min-height:0;overflow:hidden;}
+.sidebar{border-right:1px solid var(--border);padding:16px;background:var(--bg2);overflow-y:auto;}
+.sidebar-section{margin-bottom:20px;}
+.sidebar-title{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.cluster-chip{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:2px;margin-bottom:2px;cursor:pointer;transition:background .1s;border:1px solid transparent;}
+.cluster-chip:hover{background:var(--bg3);}
+.cluster-chip.active{border-color:var(--border2);background:var(--bg3);}
+.cluster-name{font-size:11px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.cluster-count{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);background:var(--bg);padding:1px 5px;border-radius:2px;}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+.table-wrapper{display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.table-info-bar{flex-shrink:0;padding:9px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);}
+.table-info{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);}
+.table-info span{color:var(--accent);}
+.table-scroll{flex:1;overflow:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--bg3);padding:0;text-align:left;border-bottom:2px solid var(--border2);position:sticky;top:0;z-index:20;cursor:pointer;user-select:none;white-space:nowrap;}
+thead th:hover .th-main{color:var(--text);}
+thead th.sorted .th-main{color:var(--accent);}
+.th-inner{padding:9px 12px;display:flex;flex-direction:column;gap:2px;}
+.th-main{font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text2);}
+.th-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:9px 12px;color:var(--text2);white-space:nowrap;}
+tbody td:first-child{color:var(--text);font-weight:500;}
+.td-mono{font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.badge{display:inline-block;padding:2px 7px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;}
+.badge-p1{background:rgba(255,59,59,.15);color:var(--red);}
+.badge-p2{background:rgba(255,140,66,.15);color:var(--orange);}
+.badge-p3{background:rgba(255,209,102,.12);color:var(--yellow);}
+.badge-p5{background:rgba(6,214,160,.12);color:var(--green);}
+.badge-p9{background:rgba(125,143,163,.1);color:var(--text3);}
+.tag{display:inline-block;padding:2px 6px;border-radius:2px;font-size:10px;font-family:'IBM Plex Mono',monospace;}
+.tag-grande{background:rgba(103,162,45,.1);color:var(--blue);}
+.tag-medio{background:rgba(255,209,102,.1);color:var(--yellow);}
+.tag-pequeno{background:rgba(125,143,163,.1);color:var(--text3);}
+.tag-crescendo{background:rgba(6,214,160,.1);color:var(--green);}
+.tag-estavel{background:rgba(103,162,45,.1);color:var(--blue);}
+.tag-caindo{background:rgba(255,59,59,.1);color:var(--red);}
+.tag-alto{background:rgba(6,214,160,.1);color:var(--green);}
+.tag-normal{background:rgba(103,162,45,.1);color:var(--blue);}
+.tag-baixo{background:rgba(255,59,59,.1);color:var(--red);}
+.tag-recente{background:rgba(6,214,160,.1);color:var(--green);}
+.tag-distante{background:rgba(255,140,66,.1);color:var(--orange);}
+.empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:12px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:4px;width:880px;max-width:95vw;height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.modal-header{flex-shrink:0;padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
+.modal-close{background:transparent;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:2px;transition:color .15s;}
+.modal-close:hover{color:var(--text);}
+.modal-tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--border);background:var(--bg3);}
+.mtab{padding:10px 20px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.mtab:hover{color:var(--text2);}
+.mtab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.modal-body{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.tab-pane{display:none;flex:1;overflow-y:auto;padding:28px 32px;min-height:0;}
+.tab-pane.active{display:block;}
+
+.sql-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.sql-tab{padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--border);border-radius:2px;cursor:pointer;color:var(--text3);background:var(--bg3);transition:all .15s;}
+.sql-tab:hover{color:var(--text2);}
+.sql-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(103,162,45,.05);}
+.sql-block{display:none;}
+.sql-block.active{display:block;}
+.sql-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sql-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;}
+.copy-btn{background:transparent;border:1px solid var(--border2);color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;border-radius:2px;cursor:pointer;transition:all .15s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+.copy-btn.copied{border-color:var(--green);color:var(--green);}
+pre{background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.7;color:var(--text2);overflow-x:auto;white-space:pre;}
+
+.doc-section{margin-bottom:32px;}
+.doc-h1{font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.doc-h2{font-size:14px;font-weight:600;color:var(--accent);margin:20px 0 10px;}
+.doc-h3{font-size:12px;font-weight:600;color:var(--text2);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em;}
+.doc-p{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:8px;}
+.doc-callout{background:rgba(103,162,45,.06);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 3px 3px 0;font-size:12px;color:var(--text2);line-height:1.6;margin:10px 0;}
+.doc-callout.warn{background:rgba(255,140,66,.06);border-left-color:var(--orange);}
+.dtable{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0;}
+.dtable th{background:var(--bg3);padding:8px 12px;text-align:left;font-weight:600;font-size:11px;color:var(--text2);border-bottom:2px solid var(--border2);}
+.dtable td{padding:8px 12px;color:var(--text2);border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+.dtable tr:last-child td{border-bottom:none;}
+.dtable tr:hover td{background:var(--bg3);}
+.chip{display:inline-block;padding:1px 6px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:10px;}
+.chip-red{background:rgba(255,59,59,.15);color:var(--red);}
+.chip-orange{background:rgba(255,140,66,.15);color:var(--orange);}
+.chip-yellow{background:rgba(255,209,102,.12);color:var(--yellow);}
+.chip-green{background:rgba(6,214,160,.12);color:var(--green);}
+.chip-blue{background:rgba(103,162,45,.12);color:var(--blue);}
+.chip-gray{background:rgba(125,143,163,.1);color:var(--text3);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body onload="initApp()">
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-dot"></div>
+    <h1>Corporate Operations · Painel de Classificação</h1>
+  </div>
+  <div class="header-btns">
+    <div class="file-meta" id="file-meta" style="display:none;">
+      <span class="file-meta-name" id="file-meta-name"></span>
+      <span class="file-meta-date" id="file-meta-date"></span>
+    </div>
+    <span id="record-count"></span>
+    <button class="hbtn drive" id="drive-btn" onclick="fetchFromDrive()">
+      <span class="drive-icon">⟳</span> Atualizar do Drive
+    </button>
+    <button class="hbtn" onclick="openModal('sql')">⟨/⟩ SQL</button>
+    <button class="hbtn primary" onclick="openModal('docs')">📋 Documentação</button>
+    <button class="hbtn" onclick="resetUpload()">↑ Novo CSV</button>
+    <button class="hbtn" onclick="logout()" style="border-color:var(--border);color:var(--text3);" title="Sair">⎋ Sair</button>
+  </div>
+</div>
+
+<div id="upload-zone">
+  <div class="upload-box" id="drop-zone"
+    onclick="document.getElementById('file-input').click()"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="handleDrop(event)">
+    <div class="upload-icon">⬡</div>
+    <h2>Carregar arquivo de classificação</h2>
+    <p>Arraste o CSV exportado do Databricks<br>ou clique para selecionar</p>
+    <div class="hint">empresa · telefones · cluster · prioridade_operacional · ...</div>
+  </div>
+  <input type="file" id="file-input" accept=".csv" onchange="handleFile(event)">
+</div>
+
+<!-- LOGIN ZONE -->
+<div id="login-zone" style="display:none;">
+  <div class="login-card">
+    <div class="login-header">
+      <h2>Acesso ao Painel Corporate</h2>
+      <p>Informe seu e-mail para receber o código de verificação</p>
+    </div>
+    <div class="login-body">
+      <!-- Step 1: email -->
+      <div class="login-step active" id="step-email">
+        <div>
+          <div class="login-label">E-MAIL CORPORATIVO</div>
+          <input type="email" id="login-email" class="login-input" placeholder="seu@email.com.br"
+            onkeydown="if(event.key==='Enter')submitEmail()">
+        </div>
+        <div class="login-error" id="email-error"></div>
+        <button class="login-btn" id="email-btn" onclick="submitEmail()">ENVIAR CÓDIGO →</button>
+      </div>
+      <!-- Step 2: code -->
+      <div class="login-step" id="step-code">
+        <div class="login-email-display" id="code-email-display"></div>
+        <div>
+          <div class="login-label">CÓDIGO DE VERIFICAÇÃO</div>
+          <input type="text" id="login-code" class="login-input code-input" placeholder="000000"
+            maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+            onkeydown="if(event.key==='Enter')submitCode()">
+        </div>
+        <div class="login-hint">Enviamos um código de 6 dígitos para seu e-mail. <strong>Válido por 10 minutos.</strong></div>
+        <div class="login-error" id="code-error"></div>
+        <button class="login-btn" id="code-btn" onclick="submitCode()">VERIFICAR →</button>
+        <button class="login-resend" onclick="resendCode()">Reenviar código</button>
+        <button class="login-back" onclick="backToEmail()">← Voltar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="kpi-row">
+    <div class="kpi active" data-p="all" onclick="filterByPriority('all',this)"><div class="kpi-label">Total de Empresas</div><div class="kpi-value" id="kpi-all">0</div><div class="kpi-sub">na carteira</div></div>
+    <div class="kpi" data-p="1" onclick="filterByPriority('1',this)"><div class="kpi-label">🔴 Ação Hoje</div><div class="kpi-value" id="kpi-1">0</div><div class="kpi-sub">alerta crítico</div></div>
+    <div class="kpi" data-p="2" onclick="filterByPriority('2',this)"><div class="kpi-label">🟠 Esta Semana</div><div class="kpi-value" id="kpi-2">0</div><div class="kpi-sub">investigar urgente</div></div>
+    <div class="kpi" data-p="3" onclick="filterByPriority('3',this)"><div class="kpi-label">🟡 Revisão Semanal</div><div class="kpi-value" id="kpi-34">0</div><div class="kpi-sub">atenção / monitorar</div></div>
+    <div class="kpi" data-p="5" onclick="filterByPriority('5',this)"><div class="kpi-label">🟢 Oportunidade</div><div class="kpi-value" id="kpi-5">0</div><div class="kpi-sub">upsell / crescendo</div></div>
+    <div class="kpi" data-p="4" onclick="filterByPriority('4',this)"><div class="kpi-label">⚪ Baixa Prioridade</div><div class="kpi-value" id="kpi-9">0</div><div class="kpi-sub">rotina / ok</div></div>
+  </div>
+  <div class="toolbar">
+    <span class="toolbar-label">Filtros</span>
+    <input type="text" id="search" placeholder="Buscar empresa..." oninput="applyFilters()">
+    <div class="sep"></div>
+    <select id="f-tamanho" onchange="applyFilters()"><option value="">Porte da Empresa</option><option>GRANDE</option><option>MÉDIO</option><option>PEQUENO</option></select>
+    <select id="f-tendencia" onchange="applyFilters()"><option value="">Tendência de Volume</option><option>CRESCENDO</option><option>ESTÁVEL</option><option>CAINDO</option></select>
+    <select id="f-acesso" onchange="applyFilters()"><option value="">Acesso à Plataforma</option><option>ALTO</option><option>NORMAL</option><option>BAIXO</option></select>
+    <select id="f-recencia" onchange="applyFilters()"><option value="">Última Negociação</option><option value="RECENTE">Recente (dentro da janela)</option><option value="DISTANTE">Distante (fora da janela)</option></select>
+    <div class="sep"></div>
+    <select id="f-cluster" onchange="applyFilters()"><option value="">Todos os Clusters</option></select>
+    <button class="btn-reset" onclick="resetFilters()">↺ Limpar filtros</button>
+  </div>
+  <div class="body-row">
+    <div class="sidebar">
+      <div class="sidebar-section"><div class="sidebar-title">Situação dos Clientes</div><div id="cluster-list"></div></div>
+      <div class="sidebar-section"><div class="sidebar-title">Distribuição da Carteira</div><div id="dist-tamanho" style="margin-bottom:14px;"></div><div id="dist-tendencia" style="margin-bottom:14px;"></div><div id="dist-acesso"></div></div>
+    </div>
+    <div class="table-wrapper">
+      <div class="table-info-bar">
+        <div class="table-info">Exibindo <span id="showing-count">0</span> de <span id="total-count">0</span> empresas</div>
+        <div class="table-info" id="sort-info" style="color:var(--text3)"></div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th onclick="sortBy('empresa')"><div class="th-inner"><span class="th-main">Empresa</span><span class="th-sub">nome</span></div></th>
+            <th onclick="sortBy('prioridade_operacional')"><div class="th-inner"><span class="th-main">Prioridade</span><span class="th-sub">ação</span></div></th>
+            <th onclick="sortBy('cluster')"><div class="th-inner"><span class="th-main">Situação do Cliente</span><span class="th-sub">cluster</span></div></th>
+            <th onclick="sortBy('tamanho')"><div class="th-inner"><span class="th-main">Porte</span><span class="th-sub">vs. base</span></div></th>
+            <th onclick="sortBy('tendencia')"><div class="th-inner"><span class="th-main">Tendência de Volume</span><span class="th-sub">vs. histórico próprio</span></div></th>
+            <th onclick="sortBy('acesso')"><div class="th-inner"><span class="th-main">Acesso à Plataforma</span><span class="th-sub">vs. histórico próprio</span></div></th>
+            <th onclick="sortBy('recencia')"><div class="th-inner"><span class="th-main">Última Negociação</span><span class="th-sub">recência</span></div></th>
+            <th onclick="sortBy('dias_desde_ultima')"><div class="th-inner"><span class="th-main">Dias sem Negociar</span><span class="th-sub">desde última</span></div></th>
+            <th onclick="sortBy('vol_medio_3m')"><div class="th-inner"><span class="th-main">Vol. Médio (3m)</span><span class="th-sub">ton / mês</span></div></th>
+            <th onclick="sortBy('vol_medio_janela')"><div class="th-inner"><span class="th-main">Vol. na Janela</span><span class="th-sub">período analisado</span></div></th>
+            <th onclick="sortBy('logins_janela')"><div class="th-inner"><span class="th-main">Acessos na Janela</span><span class="th-sub">logins no período</span></div></th>
+            <th><div class="th-inner"><span class="th-main">Telefones</span><span class="th-sub">contatos</span></div></th>
+          </tr></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div id="empty-msg" class="empty" style="display:none;">Nenhum resultado para os filtros aplicados.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Documentação</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="mtab active" id="tab-docs" onclick="switchTab('docs')">📋 Documentação</div>
+      <div class="mtab" id="tab-sql" onclick="switchTab('sql')">⟨/⟩ SQL</div>
+    </div>
+    <div class="modal-body">
+
+      <div class="tab-pane active" id="pane-docs">
+        <div class="doc-section">
+          <div class="doc-h1">Classificação de Clientes Corporate</div>
+          <div class="doc-p">Sistema que classifica cada empresa da carteira Corporate em clusters acionáveis, combinando 4 dimensões independentes. O objetivo é dar ao time de Operações uma ordem clara de prioridade de contato e tipo de intervenção recomendada.</div>
+        </div>
+        <div class="doc-section">
+          <div class="doc-h2">1. Parâmetro de Janela Temporal</div>
+          <div class="doc-p">Todo o cálculo é controlado por um único parâmetro:</div>
+          <table class="dtable">
+            <tr><th>Parâmetro</th><th>Valores</th><th>Efeito</th></tr>
+            <tr><td><code>janela_dias</code></td><td>30 ou 60</td><td>Define a janela de análise ancorada na data da última negociação de cada cliente</td></tr>
+          </table>
+          <div class="doc-callout">A janela não é fixa no calendário. Se a última negociação foi em 01/01/2026, a janela de 30 dias vai de 02/12/2025 a 01/01/2026. Isso evita penalizar clientes com ciclos mais espaçados.</div>
+        </div>
+        <div class="doc-section">
+          <div class="doc-h2">2. As 4 Dimensões</div>
+          <div class="doc-h3">Dimensão 1 — Tamanho do Cliente</div>
+          <div class="doc-p">Compara o volume médio mensal dos últimos 3 meses do cliente com os percentis da base total.</div>
+          <table class="dtable">
+            <tr><th>Classificação</th><th>Regra</th><th>Interpretação</th></tr>
+            <tr><td><span class="chip chip-blue">GRANDE</span></td><td>Vol. médio 3m &gt; P75 da base</td><td>Maior 25% da carteira</td></tr>
+            <tr><td><span class="chip chip-yellow">MÉDIO</span></td><td>Vol. médio 3m entre P25 e P75 da base</td><td>Faixa intermediária</td></tr>
+            <tr><td><span class="chip chip-gray">PEQUENO</span></td><td>Vol. médio 3m &lt; P25 da base</td><td>Menor 25% da carteira</td></tr>
+          </table>
+          <div class="doc-h3">Dimensão 2 — Tendência de Volume</div>
+          <div class="doc-p">Compara o volume médio na janela com o histórico próprio do cliente (últimos 12 meses). Usa <code>PERCENTILE_CONT</code> pois volume é variável contínua.</div>
+          <table class="dtable">
+            <tr><th>Classificação</th><th>Regra</th><th>Sinal</th></tr>
+            <tr><td><span class="chip chip-green">CRESCENDO</span></td><td>Vol. janela &gt; P75 próprio (12m)</td><td>Acima do padrão histórico do cliente</td></tr>
+            <tr><td><span class="chip chip-blue">ESTÁVEL</span></td><td>Vol. janela entre P25 e P75 próprio</td><td>Dentro do comportamento esperado</td></tr>
+            <tr><td><span class="chip chip-red">CAINDO</span></td><td>Vol. janela &lt; P25 próprio (12m)</td><td>Abaixo do padrão histórico</td></tr>
+          </table>
+          <div class="doc-h3">Dimensão 3 — Acesso à Plataforma</div>
+          <div class="doc-p">Compara os logins na janela com o histórico próprio do cliente. Usa <code>PERCENTILE_DISC</code> pois logins são valores inteiros.</div>
+          <table class="dtable">
+            <tr><th>Classificação</th><th>Regra</th><th>Sinal</th></tr>
+            <tr><td><span class="chip chip-green">ALTO</span></td><td>Logins janela &gt; P75 próprio (12m)</td><td>Engajamento acima do padrão</td></tr>
+            <tr><td><span class="chip chip-blue">NORMAL</span></td><td>Logins entre P25 e P75 próprio</td><td>Engajamento esperado</td></tr>
+            <tr><td><span class="chip chip-red">BAIXO</span></td><td>Logins &lt; P25 próprio ou zero</td><td>Sinal de alerta</td></tr>
+          </table>
+          <div class="doc-h3">Dimensão 4 — Recência</div>
+          <table class="dtable">
+            <tr><th>Classificação</th><th>Regra</th><th>Implicação</th></tr>
+            <tr><td><span class="chip chip-green">RECENTE</span></td><td>Dias desde última ≤ janela_dias</td><td>Cliente ativo no período</td></tr>
+            <tr><td><span class="chip chip-orange">DISTANTE</span></td><td>Dias desde última &gt; janela_dias</td><td>Fora da janela — pode ser ciclo natural ou risco</td></tr>
+          </table>
+        </div>
+        <div class="doc-section">
+          <div class="doc-h2">3. Clusters e Prioridade Operacional</div>
+          <div class="doc-h3">Carteira Grande (&gt; P75 da base)</div>
+          <table class="dtable">
+            <tr><th>Cluster</th><th>Tendência de Volume</th><th>Acesso</th><th>Prior.</th><th>Ação</th></tr>
+            <tr><td><span class="chip chip-red">ALERTA CRÍTICO</span></td><td>CAINDO</td><td>BAIXO</td><td style="color:var(--red);font-weight:600;">P1 — Hoje</td><td>Contato urgente</td></tr>
+            <tr><td><span class="chip chip-red">INVESTIGAR URGENTE</span></td><td>CAINDO</td><td>NORMAL/ALTO</td><td style="color:var(--orange);font-weight:600;">P2 — Esta semana</td><td>Investigar motivo da queda</td></tr>
+            <tr><td><span class="chip chip-yellow">ATENÇÃO</span></td><td>ESTÁVEL</td><td>BAIXO</td><td style="color:var(--yellow);">P3 — Semanal</td><td>Monitorar acesso</td></tr>
+            <tr><td><span class="chip chip-blue">MONITORAR</span></td><td>ESTÁVEL</td><td>NORMAL/ALTO</td><td style="color:var(--yellow);">P3 — Semanal</td><td>Sem ação imediata</td></tr>
+            <tr><td><span class="chip chip-yellow">MIGRAÇÃO SILENCIOSA</span></td><td>CRESCENDO</td><td>BAIXO</td><td style="color:var(--yellow);">P3 — Semanal</td><td>Investigar canal alternativo</td></tr>
+            <tr><td><span class="chip chip-green">UPSELL PRIORITY</span></td><td>CRESCENDO</td><td>NORMAL/ALTO</td><td style="color:var(--green);">P5 — Comercial</td><td>Oferta de upsell/cross-sell</td></tr>
+          </table>
+          <div class="doc-h3">Carteira Média (P25–P75 da base)</div>
+          <table class="dtable">
+            <tr><th>Cluster</th><th>Tendência de Volume</th><th>Acesso</th><th>Prior.</th><th>Ação</th></tr>
+            <tr><td><span class="chip chip-red">RISCO CHURN</span></td><td>CAINDO</td><td>BAIXO</td><td style="color:var(--yellow);">P4 — Semanal</td><td>Contato preventivo</td></tr>
+            <tr><td><span class="chip chip-yellow">INVESTIGAR</span></td><td>CAINDO</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P6</td><td>Entender queda de volume</td></tr>
+            <tr><td><span class="chip chip-yellow">ALERTA LEVE</span></td><td>ESTÁVEL</td><td>BAIXO</td><td style="color:var(--text3);">P7</td><td>Check-in</td></tr>
+            <tr><td><span class="chip chip-gray">OPERAÇÃO PADRÃO</span></td><td>ESTÁVEL</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P9</td><td>Nenhuma</td></tr>
+            <tr><td><span class="chip chip-green">OPORTUNIDADE MÉDIA</span></td><td>CRESCENDO</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P8</td><td>Desenvolver</td></tr>
+          </table>
+          <div class="doc-h3">Carteira Pequena (&lt; P25 da base)</div>
+          <table class="dtable">
+            <tr><th>Cluster</th><th>Tendência de Volume</th><th>Acesso</th><th>Prior.</th><th>Ação</th></tr>
+            <tr><td><span class="chip chip-gray">CHURN NATURAL</span></td><td>CAINDO</td><td>BAIXO</td><td style="color:var(--text3);">P9</td><td>Baixo impacto</td></tr>
+            <tr><td><span class="chip chip-yellow">VERIFICAR</span></td><td>CAINDO</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P9</td><td>Verificar contexto</td></tr>
+            <tr><td><span class="chip chip-gray">LOW PRIORITY</span></td><td>ESTÁVEL</td><td>BAIXO</td><td style="color:var(--text3);">P9</td><td>Nenhuma</td></tr>
+            <tr><td><span class="chip chip-gray">OK</span></td><td>ESTÁVEL</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P9</td><td>Nenhuma</td></tr>
+            <tr><td><span class="chip chip-blue">POTENCIAL</span></td><td>CRESCENDO</td><td>BAIXO</td><td style="color:var(--text3);">P9</td><td>Acompanhar</td></tr>
+            <tr><td><span class="chip chip-green">DESENVOLVER</span></td><td>CRESCENDO</td><td>NORMAL/ALTO</td><td style="color:var(--text3);">P9</td><td>Desenvolver relacionamento</td></tr>
+          </table>
+        </div>
+        <div class="doc-section">
+          <div class="doc-h2">4. Fontes de Dados</div>
+          <table class="dtable">
+            <tr><th>Fonte</th><th>Tipo</th><th>Identificação</th></tr>
+            <tr><td>LDC</td><td>Trading CF</td><td>cf_ldc_seller.phone_number</td></tr>
+            <tr><td>AMAGGI</td><td>Trading CF</td><td>cf_amaggi_seller.phone_number</td></tr>
+            <tr><td>CARGILL</td><td>Trading CF</td><td>cf_cargill_seller.phone_number</td></tr>
+            <tr><td>ADM</td><td>Trading CF</td><td>cf_adm_seller.phone_number</td></tr>
+            <tr><td>Corporate OFF CF</td><td>Negociação direta</td><td>portal_collaborator.phone_number → collaborator_id</td></tr>
+          </table>
+        </div>
+        <div class="doc-section">
+          <div class="doc-h2">5. Limitações e Pontos de Atenção</div>
+          <table class="dtable">
+            <tr><th>Situação</th><th>Como tratar</th></tr>
+            <tr><td>Cliente sem histórico de 12m</td><td>Percentis próprios ficam zerados → tende a cair em CAINDO/BAIXO. Validar manualmente.</td></tr>
+            <tr><td>Sazonalidade forte</td><td>Os percentis próprios (12m) absorvem parte da sazonalidade. Para ciclos muito irregulares, usar janela de 60 dias.</td></tr>
+            <tr><td>Transações via API sem acesso humano</td><td>Pode aparecer como ALTO volume + BAIXO acesso → MIGRAÇÃO SILENCIOSA. Validar se é integração técnica.</td></tr>
+            <tr><td>Corporate OFF CF (V1)</td><td>CTE corporate desativada aguardando correção de permissão S3. Reativar na V2.</td></tr>
+            <tr><td>Múltiplos telefones por empresa</td><td>Todos os phones são agregados na coluna "telefones" separados por " | ". Volume e acessos são calculados no nível do keyaccountid.</td></tr>
+          </table>
+          <div class="doc-callout warn">Fluxo recomendado: rodar a query no Databricks → exportar como CSV → carregar no painel → filtrar por Prioridade 1 e 2 → distribuir para o time de operações.</div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="pane-sql">
+        <div class="sql-tabs">
+          <div class="sql-tab active" onclick="switchSqlTab('v1',this)">V1 — Sem Corporate</div>
+          <div class="sql-tab" onclick="switchSqlTab('v2',this)">V2 — Com Corporate</div>
+        </div>
+        <div class="sql-block active" id="sql-v1">
+          <div class="sql-toolbar">
+            <span class="sql-label">V1 · corporate desativado · aguardando correção S3</span>
+            <button class="copy-btn" onclick="copySQL('v1',this)">⎘ Copiar SQL</button>
+          </div>
+          <pre id="pre-v1"></pre>
+        </div>
+        <div class="sql-block" id="sql-v2">
+          <div class="sql-toolbar">
+            <span class="sql-label">V2 · corporate ativo · usar após correção S3</span>
+            <button class="copy-btn" onclick="copySQL('v2',this)">⎘ Copiar SQL</button>
+          </div>
+          <pre id="pre-v2"></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PHONE MODAL -->
+<div class="phone-modal-overlay" id="phone-modal" onclick="closePhoneModalOut(event)">
+  <div class="phone-modal">
+    <div class="phone-modal-header">
+      <span class="phone-modal-title" id="phone-modal-empresa"></span>
+      <button class="phone-modal-close" onclick="closePhoneModal()">✕</button>
+    </div>
+    <div class="phone-list" id="phone-list"></div>
+  </div>
+</div>
+
+<script>
+// ── LOGIN STATE ───────────────────────────────────────────────
+let sessionToken = null;
+let sessionEmail = null;
+
+function initApp() {
+  // Check if session stored in sessionStorage
+  const stored = sessionStorage.getItem('corp_session');
+  if (stored) {
+    try {
+      const s = JSON.parse(stored);
+      sessionToken = s.token;
+      sessionEmail = s.email;
+      showUploadZone();
+      return;
+    } catch(e) {}
+  }
+  showLoginZone();
+}
+
+function showLoginZone() {
+  document.getElementById('login-zone').style.display = 'flex';
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('main').style.display = 'none';
+}
+function showUploadZone() {
+  document.getElementById('login-zone').style.display = 'none';
+  document.getElementById('upload-zone').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+  // Update header with email
+  if (sessionEmail) {
+    document.getElementById('file-meta-name').textContent = '👤 ' + sessionEmail;
+    document.getElementById('file-meta-date').textContent = 'Sessão ativa · 8 horas';
+    document.getElementById('file-meta').style.display = 'flex';
+  }
+}
+
+async function submitEmail() {
+  const email = document.getElementById('login-email').value.trim();
+  const btn   = document.getElementById('email-btn');
+  const err   = document.getElementById('email-error');
+  err.textContent = '';
+  if (!email || !email.includes('@')) { err.textContent = 'Informe um e-mail válido'; return; }
+  btn.disabled = true;
+  btn.textContent = 'ENVIANDO...';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=sendCode&email=' + encodeURIComponent(email);
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) { err.textContent = data.error; btn.disabled = false; btn.textContent = 'ENVIAR CÓDIGO →'; return; }
+    document.getElementById('code-email-display').textContent = email;
+    document.getElementById('step-email').classList.remove('active');
+    document.getElementById('step-code').classList.add('active');
+    document.getElementById('login-code').focus();
+  } catch(e) {
+    err.textContent = 'Erro de conexão. Tente novamente.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'ENVIAR CÓDIGO →';
+}
+
+async function submitCode() {
+  const email = document.getElementById('login-email').value.trim();
+  const code  = document.getElementById('login-code').value.trim();
+  const btn   = document.getElementById('code-btn');
+  const err   = document.getElementById('code-error');
+  err.textContent = '';
+  if (code.length !== 6) { err.textContent = 'O código tem 6 dígitos'; return; }
+  btn.disabled = true;
+  btn.textContent = 'VERIFICANDO...';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=verifyCode&email=' + encodeURIComponent(email) + '&code=' + code;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.error) { err.textContent = data.error; btn.disabled = false; btn.textContent = 'VERIFICAR →'; return; }
+    sessionToken = data.token;
+    sessionEmail = data.email;
+    sessionStorage.setItem('corp_session', JSON.stringify({ token: sessionToken, email: sessionEmail }));
+    showUploadZone();
+  } catch(e) {
+    err.textContent = 'Erro de conexão. Tente novamente.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'VERIFICAR →';
+}
+
+async function resendCode() {
+  document.getElementById('login-code').value = '';
+  document.getElementById('code-error').textContent = '';
+  await submitEmail();
+  // Go back to code step
+  document.getElementById('step-email').classList.remove('active');
+  document.getElementById('step-code').classList.add('active');
+}
+
+function backToEmail() {
+  document.getElementById('step-code').classList.remove('active');
+  document.getElementById('step-email').classList.add('active');
+  document.getElementById('login-code').value = '';
+  document.getElementById('code-error').textContent = '';
+}
+
+function logout() {
+  sessionToken = null; sessionEmail = null;
+  sessionStorage.removeItem('corp_session');
+  document.getElementById('file-meta').style.display = 'none';
+  showLoginZone();
+}
+
+const SQL_V1 = `-- ============================================================
+-- CLASSIFICAÇÃO DE CLIENTES CORPORATE
+-- VERSÃO 1 — sem corporate (aguardando correção de acesso S3)
+-- ============================================================
+
+WITH
+
+parametro AS (
+  SELECT 30 AS janela_dias  -- altere para 30 ou 60
+),
+
+ka AS (
+  SELECT id, name, organization_id
+  FROM graodiretodatalake2.gold.app_key_account
+),
+
+ka_phone AS (
+  SELECT phone, key_account_id AS keyaccountid
+  FROM graodiretodatalake2.gold.app_key_account_phone
+),
+
+-- corporate DESATIVADO — aguardando correção de acesso S3
+-- corporate AS (
+--   SELECT c.phone_number AS phone, k.id AS keyaccountid
+--   FROM graodiretodatalake2.gold.portal_collaborator c
+--   INNER JOIN graodiretodatalake2.gold.portal_organization o ON o.id = c.organization_id
+--   INNER JOIN graodiretogold1.gold.portal_organizations_solutions o2 ON o2.organizationId = o.id
+--   INNER JOIN graodiretodatalake2.gold.app_key_account k ON k.organization_id = c.organization_id
+--   WHERE o2.solutionID = 3 AND c.enabled = true
+--     AND o.corporate_name NOT IN ('Grão Direto LTDA', 'Grão Direto')
+-- ),
+
+all_ka_raw AS (
+  SELECT phone, keyaccountid FROM ka_phone
+  -- UNION ALL
+  -- SELECT phone, keyaccountid FROM corporate
+),
+
+all_ka_dedup AS (
+  SELECT phone, keyaccountid,
+         ROW_NUMBER() OVER (PARTITION BY phone ORDER BY phone) AS rn
+  FROM all_ka_raw
+),
+
+all_ka AS (
+  SELECT a.phone, a.keyaccountid, k.name AS ka_name
+  FROM all_ka_dedup a
+  LEFT JOIN ka k ON k.id = a.keyaccountid
+  WHERE a.rn = 1
+),
+
+acessos AS (
+  SELECT eo.created_at AS createdAt, u.phone_number AS phoneNumber
+  FROM graodiretodatalake2.gold.ocdc_user_event_occurrences eo
+  INNER JOIN graodiretodatalake2.gold.app_user u ON u.id = eo.user_id
+  WHERE eo.event_id IN (60, 61, 62, 63, 216, 257)
+    AND (u.email NOT LIKE '%@graodireto.com%' OR u.email IS NULL)
+),
+
+todas_negociacoes AS (
+  SELECT ak.keyaccountid, p.created_at AS data_negociacao,
+         CAST(p.weight AS DECIMAL(18,2)) AS toneladas
+  FROM graodiretodatalake2.gold.cf_ldc_contract c
+  INNER JOIN graodiretodatalake2.gold.cf_ldc_pre_contract p ON c.pre_contract_id = p.id
+  INNER JOIN graodiretodatalake2.gold.cf_ldc_seller s ON s.id = p.seller_id
+  INNER JOIN all_ka ak ON ak.phone = s.phone_number
+  WHERE c.verification_status = 2
+
+  UNION ALL
+  SELECT ak.keyaccountid, p.created_at, CAST(p.weight AS DECIMAL(18,2))
+  FROM graodiretodatalake2.gold.cf_amaggi_contract c
+  INNER JOIN graodiretodatalake2.gold.cf_amaggi_pre_contract p ON c.pre_contract_id = p.id
+  INNER JOIN graodiretodatalake2.gold.cf_amaggi_seller s ON s.id = p.seller_id
+  INNER JOIN all_ka ak ON ak.phone = s.phone_number
+  WHERE c.verification_status = 2
+
+  UNION ALL
+  SELECT ak.keyaccountid, p.created_at, CAST(p.weight AS DECIMAL(18,2))
+  FROM graodiretodatalake2.gold.cf_cargill_contract c
+  INNER JOIN graodiretodatalake2.gold.cf_cargill_pre_contract p ON c.pre_contract_id = p.id
+  INNER JOIN graodiretodatalake2.gold.cf_cargill_seller s ON s.id = p.seller_id
+  INNER JOIN all_ka ak ON ak.phone = s.phone_number
+  WHERE c.verification_status = 2
+
+  UNION ALL
+  SELECT ak.keyaccountid, p.created_at, CAST(p.weight AS DECIMAL(18,2))
+  FROM graodiretodatalake2.gold.cf_adm_contract c
+  INNER JOIN graodiretodatalake2.gold.cf_adm_pre_contract p ON c.pre_contract_id = p.id
+  INNER JOIN graodiretodatalake2.gold.cf_adm_seller s ON s.id = p.seller_id
+  INNER JOIN all_ka ak ON ak.phone = s.phone_number
+  WHERE c.verification_status = 2
+
+  UNION ALL
+  SELECT ak.keyaccountid, co.updated_at AS data_negociacao,
+    CAST(CASE WHEN i.counter_offer_weight IS NOT NULL
+              THEN i.counter_offer_weight ELSE go2.weight END AS DECIMAL(18,2)) AS toneladas
+  FROM graodiretodatalake2.gold.ocdc_company_offer co
+  INNER JOIN graodiretodatalake2.gold.ocdc_indication i    ON i.id   = co.indication_id
+  LEFT  JOIN graodiretodatalake2.gold.ocdc_group_offer go2 ON go2.id = co.group_offer_id
+  INNER JOIN graodiretodatalake2.gold.ocdc_external_commercial ec ON ec.id = co.external_commercial_id
+  LEFT  JOIN graodiretodatalake2.gold.portal_collaborator c2 ON c2.user_id = co.collaborator_id
+  INNER JOIN all_ka ak ON ak.phone = c2.phone_number
+  WHERE co.state = 'NEGOTIATION' AND co.is_external = true AND co.organization_id NOT IN (6)
+),
+
+ultima_negociacao AS (
+  SELECT keyaccountid,
+    MAX(data_negociacao)                         AS ultima_data,
+    DATEDIFF(CURRENT_DATE, MAX(data_negociacao)) AS dias_desde_ultima
+  FROM todas_negociacoes GROUP BY keyaccountid
+),
+
+janela_cliente AS (
+  SELECT u.keyaccountid, u.ultima_data, u.dias_desde_ultima,
+    DATE_ADD(u.ultima_data, -p.janela_dias) AS janela_inicio,
+    u.ultima_data                            AS janela_fim,
+    p.janela_dias,
+    CASE WHEN u.dias_desde_ultima <= p.janela_dias THEN 'RECENTE' ELSE 'DISTANTE' END AS recencia
+  FROM ultima_negociacao u CROSS JOIN parametro p
+),
+
+historico_volume_12m AS (
+  SELECT keyaccountid,
+    DATE_TRUNC('month', data_negociacao) AS mes,
+    SUM(toneladas)                        AS volume_mensal
+  FROM todas_negociacoes
+  WHERE data_negociacao >= DATE_ADD(CURRENT_DATE, -365)
+  GROUP BY keyaccountid, DATE_TRUNC('month', data_negociacao)
+),
+
+historico_acesso_12m AS (
+  SELECT ak.keyaccountid,
+    DATE_TRUNC('month', a.createdAt) AS mes,
+    COUNT(*)                          AS logins_mes
+  FROM acessos a
+  INNER JOIN all_ka ak ON ak.phone = a.phoneNumber
+  WHERE a.createdAt >= DATE_ADD(CURRENT_DATE, -365)
+  GROUP BY ak.keyaccountid, DATE_TRUNC('month', a.createdAt)
+),
+
+percentis_volume_proprio AS (
+  SELECT keyaccountid,
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY volume_mensal) AS p25_vol,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY volume_mensal) AS p75_vol
+  FROM historico_volume_12m GROUP BY keyaccountid
+),
+
+percentis_acesso_proprio AS (
+  SELECT keyaccountid,
+    PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY logins_mes) AS p25_acesso,
+    PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY logins_mes) AS p75_acesso
+  FROM historico_acesso_12m GROUP BY keyaccountid
+),
+
+volume_medio_3m AS (
+  SELECT keyaccountid, AVG(volume_mensal) AS vol_medio_3m
+  FROM historico_volume_12m
+  WHERE mes >= DATE_TRUNC('month', DATE_ADD(CURRENT_DATE, -90))
+  GROUP BY keyaccountid
+),
+
+percentis_base AS (
+  SELECT
+    PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY vol_medio_3m) AS p25_base,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY vol_medio_3m) AS p75_base
+  FROM volume_medio_3m
+),
+
+volume_janela AS (
+  SELECT n.keyaccountid, AVG(n.toneladas) AS vol_medio_janela
+  FROM todas_negociacoes n
+  INNER JOIN janela_cliente j ON j.keyaccountid = n.keyaccountid
+  WHERE n.data_negociacao BETWEEN j.janela_inicio AND j.janela_fim
+  GROUP BY n.keyaccountid
+),
+
+acesso_janela AS (
+  SELECT ak.keyaccountid, COUNT(*) AS logins_janela
+  FROM acessos a
+  INNER JOIN all_ka ak ON ak.phone = a.phoneNumber
+  INNER JOIN janela_cliente j ON j.keyaccountid = ak.keyaccountid
+  WHERE a.createdAt BETWEEN j.janela_inicio AND j.janela_fim
+  GROUP BY ak.keyaccountid
+),
+
+classificacao AS (
+  SELECT
+    ka.name                                               AS empresa,
+    ARRAY_JOIN(COLLECT_LIST(DISTINCT ak.phone), ' | ')    AS telefones,
+    j.ultima_data, j.dias_desde_ultima, j.recencia, j.janela_dias,
+    ROUND(COALESCE(vm.vol_medio_3m, 0), 2)                AS vol_medio_3m,
+    ROUND(COALESCE(vj.vol_medio_janela, 0), 2)            AS vol_medio_janela,
+    COALESCE(aj.logins_janela, 0)                         AS logins_janela,
+    ROUND(COALESCE(pv.p25_vol, 0), 2)                     AS p25_vol_proprio,
+    ROUND(COALESCE(pv.p75_vol, 0), 2)                     AS p75_vol_proprio,
+    ROUND(COALESCE(pa.p25_acesso, 0), 2)                  AS p25_acesso_proprio,
+    ROUND(COALESCE(pa.p75_acesso, 0), 2)                  AS p75_acesso_proprio,
+    ROUND(pb.p25_base, 2) AS p25_base,
+    ROUND(pb.p75_base, 2) AS p75_base,
+    CASE
+      WHEN COALESCE(vm.vol_medio_3m,0) > pb.p75_base  THEN 'GRANDE'
+      WHEN COALESCE(vm.vol_medio_3m,0) >= pb.p25_base THEN 'MÉDIO'
+      ELSE 'PEQUENO'
+    END AS tamanho,
+    CASE
+      WHEN COALESCE(vj.vol_medio_janela,0) > COALESCE(pv.p75_vol,0)  THEN 'CRESCENDO'
+      WHEN COALESCE(vj.vol_medio_janela,0) >= COALESCE(pv.p25_vol,0) THEN 'ESTÁVEL'
+      ELSE 'CAINDO'
+    END AS tendencia,
+    CASE
+      WHEN COALESCE(aj.logins_janela, 0) = 0                                THEN 'BAIXO'
+      WHEN COALESCE(aj.logins_janela, 0) > COALESCE(pa.p75_acesso, 0)      THEN 'ALTO'
+      WHEN COALESCE(aj.logins_janela, 0) >= COALESCE(pa.p25_acesso, 0)     THEN 'NORMAL'
+      ELSE 'BAIXO'
+    END AS acesso
+  FROM ka
+  INNER JOIN all_ka ak ON ak.keyaccountid = ka.id
+  INNER JOIN janela_cliente j ON j.keyaccountid = ka.id
+  CROSS JOIN percentis_base pb
+  LEFT JOIN volume_medio_3m vm ON vm.keyaccountid = ka.id
+  LEFT JOIN volume_janela vj ON vj.keyaccountid = ka.id
+  LEFT JOIN acesso_janela aj ON aj.keyaccountid = ka.id
+  LEFT JOIN percentis_volume_proprio pv ON pv.keyaccountid = ka.id
+  LEFT JOIN percentis_acesso_proprio pa ON pa.keyaccountid = ka.id
+  GROUP BY ka.name, ka.id, j.ultima_data, j.dias_desde_ultima, j.recencia,
+           j.janela_dias, vm.vol_medio_3m, vj.vol_medio_janela, aj.logins_janela,
+           pv.p25_vol, pv.p75_vol, pa.p25_acesso, pa.p75_acesso, pb.p25_base, pb.p75_base
+)
+
+SELECT empresa, telefones, ultima_data, dias_desde_ultima, recencia, janela_dias,
+  vol_medio_3m, vol_medio_janela, logins_janela,
+  p25_vol_proprio, p75_vol_proprio, p25_acesso_proprio, p75_acesso_proprio,
+  p25_base, p75_base, tamanho, tendencia, acesso,
+  CASE
+    WHEN tamanho='GRANDE'  AND tendencia='CAINDO'    AND acesso='BAIXO'             THEN 'ALERTA CRÍTICO'
+    WHEN tamanho='GRANDE'  AND tendencia='CAINDO'    AND acesso IN('NORMAL','ALTO') THEN 'INVESTIGAR URGENTE'
+    WHEN tamanho='GRANDE'  AND tendencia='ESTÁVEL'   AND acesso='BAIXO'             THEN 'ATENÇÃO'
+    WHEN tamanho='GRANDE'  AND tendencia='ESTÁVEL'   AND acesso IN('NORMAL','ALTO') THEN 'MONITORAR'
+    WHEN tamanho='GRANDE'  AND tendencia='CRESCENDO' AND acesso='BAIXO'             THEN 'MIGRAÇÃO SILENCIOSA'
+    WHEN tamanho='GRANDE'  AND tendencia='CRESCENDO' AND acesso IN('NORMAL','ALTO') THEN 'UPSELL PRIORITY'
+    WHEN tamanho='MÉDIO'   AND tendencia='CAINDO'    AND acesso='BAIXO'             THEN 'RISCO CHURN'
+    WHEN tamanho='MÉDIO'   AND tendencia='CAINDO'    AND acesso IN('NORMAL','ALTO') THEN 'INVESTIGAR'
+    WHEN tamanho='MÉDIO'   AND tendencia='ESTÁVEL'   AND acesso='BAIXO'             THEN 'ALERTA LEVE'
+    WHEN tamanho='MÉDIO'   AND tendencia='ESTÁVEL'   AND acesso IN('NORMAL','ALTO') THEN 'OPERAÇÃO PADRÃO'
+    WHEN tamanho='MÉDIO'   AND tendencia='CRESCENDO' AND acesso='BAIXO'             THEN 'ATENÇÃO'
+    WHEN tamanho='MÉDIO'   AND tendencia='CRESCENDO' AND acesso IN('NORMAL','ALTO') THEN 'OPORTUNIDADE MÉDIA'
+    WHEN tamanho='PEQUENO' AND tendencia='CAINDO'    AND acesso='BAIXO'             THEN 'CHURN NATURAL'
+    WHEN tamanho='PEQUENO' AND tendencia='CAINDO'    AND acesso IN('NORMAL','ALTO') THEN 'VERIFICAR'
+    WHEN tamanho='PEQUENO' AND tendencia='ESTÁVEL'   AND acesso='BAIXO'             THEN 'LOW PRIORITY'
+    WHEN tamanho='PEQUENO' AND tendencia='ESTÁVEL'   AND acesso IN('NORMAL','ALTO') THEN 'OK'
+    WHEN tamanho='PEQUENO' AND tendencia='CRESCENDO' AND acesso='BAIXO'             THEN 'POTENCIAL'
+    WHEN tamanho='PEQUENO' AND tendencia='CRESCENDO' AND acesso IN('NORMAL','ALTO') THEN 'DESENVOLVER'
+    ELSE 'SEM DADOS'
+  END AS cluster,
+  CASE
+    WHEN tamanho='GRANDE' AND tendencia='CAINDO'                  AND acesso='BAIXO'             THEN 1
+    WHEN tamanho='GRANDE' AND tendencia='CAINDO'                  AND acesso IN('NORMAL','ALTO') THEN 2
+    WHEN tamanho='GRANDE' AND tendencia IN('ESTÁVEL','CRESCENDO') AND acesso='BAIXO'             THEN 3
+    WHEN tamanho='MÉDIO'  AND tendencia='CAINDO'                  AND acesso='BAIXO'             THEN 4
+    WHEN tamanho='GRANDE' AND tendencia='CRESCENDO'               AND acesso IN('NORMAL','ALTO') THEN 5
+    WHEN tamanho='MÉDIO'  AND tendencia='CAINDO'                  AND acesso IN('NORMAL','ALTO') THEN 6
+    WHEN tamanho='MÉDIO'  AND tendencia='ESTÁVEL'                 AND acesso='BAIXO'             THEN 7
+    WHEN tamanho='MÉDIO'  AND tendencia='CRESCENDO'                                              THEN 8
+    ELSE 9
+  END AS prioridade_operacional
+FROM classificacao
+ORDER BY prioridade_operacional, empresa`;
+
+const SQL_V2 = SQL_V1
+  .replace('-- VERSÃO 1 — sem corporate (aguardando correção de acesso S3)','-- VERSÃO 2 — com corporate (após correção de acesso S3)')
+  .replace(`-- corporate DESATIVADO — aguardando correção de acesso S3
+-- corporate AS (
+--   SELECT c.phone_number AS phone, k.id AS keyaccountid
+--   FROM graodiretodatalake2.gold.portal_collaborator c
+--   INNER JOIN graodiretodatalake2.gold.portal_organization o ON o.id = c.organization_id
+--   INNER JOIN graodiretogold1.gold.portal_organizations_solutions o2 ON o2.organizationId = o.id
+--   INNER JOIN graodiretodatalake2.gold.app_key_account k ON k.organization_id = c.organization_id
+--   WHERE o2.solutionID = 3 AND c.enabled = true
+--     AND o.corporate_name NOT IN ('Grão Direto LTDA', 'Grão Direto')
+-- ),
+
+all_ka_raw AS (
+  SELECT phone, keyaccountid FROM ka_phone
+  -- UNION ALL
+  -- SELECT phone, keyaccountid FROM corporate
+),`,
+`corporate AS (
+  SELECT c.phone_number AS phone, k.id AS keyaccountid
+  FROM graodiretodatalake2.gold.portal_collaborator c
+  INNER JOIN graodiretodatalake2.gold.portal_organization o ON o.id = c.organization_id
+  INNER JOIN graodiretogold1.gold.portal_organizations_solutions o2 ON o2.organizationId = o.id
+  INNER JOIN graodiretodatalake2.gold.app_key_account k ON k.organization_id = c.organization_id
+  WHERE o2.solutionID = 3 AND c.enabled = true
+    AND o.corporate_name NOT IN ('Grão Direto LTDA', 'Grão Direto')
+),
+
+all_ka_raw AS (
+  SELECT phone, keyaccountid FROM ka_phone
+  UNION ALL
+  SELECT phone, keyaccountid FROM corporate
+),`);
+
+document.getElementById('pre-v1').textContent = SQL_V1;
+document.getElementById('pre-v2').textContent = SQL_V2;
+
+// MODAL
+function openModal(tab){document.getElementById('modal').classList.add('open');switchTab(tab);}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeModalOut(e){if(e.target===document.getElementById('modal'))closeModal();}
+function switchTab(tab){document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');document.getElementById('pane-'+tab).classList.add('active');document.getElementById('modal-title').textContent=tab==='docs'?'Documentação':'SQL — Query de Classificação';}
+function switchSqlTab(v,el){document.querySelectorAll('.sql-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.sql-block').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('sql-'+v).classList.add('active');}
+function copySQL(v,btn){const sql=v==='v1'?SQL_V1:SQL_V2;navigator.clipboard.writeText(sql).then(()=>{btn.textContent='✓ Copiado!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='⎘ Copiar SQL';btn.classList.remove('copied');},2000);});}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// DASHBOARD
+let allData=[],filtered=[],activePriority='all',activeCluster='';
+let sortCol='prioridade_operacional',sortDir=1;
+const CLUSTER_COLORS={'ALERTA CRÍTICO':'#ff3b3b','INVESTIGAR URGENTE':'#ff6b6b','RISCO CHURN':'#ff8c42','ATENÇÃO':'#ffd166','ALERTA LEVE':'#ffd166','INVESTIGAR':'#ffd166','MIGRAÇÃO SILENCIOSA':'#67a22d','MONITORAR':'#67a22d','OPERAÇÃO PADRÃO':'#7d8fa3','UPSELL PRIORITY':'#06d6a0','OPORTUNIDADE MÉDIA':'#06d6a0','POTENCIAL':'#06d6a0','DESENVOLVER':'#06d6a0','VERIFICAR':'#ffd166','CHURN NATURAL':'#7d8fa3','LOW PRIORITY':'#4a5568','OK':'#4a5568','SEM DADOS':'#2a3340'};
+const PRIORITY_LABELS={1:'🔴 P1 — Hoje',2:'🟠 P2 — Esta semana',3:'🟡 P3 — Semanal',4:'🟡 P4 — Semanal',5:'🟢 P5 — Comercial',6:'⚪ P6',7:'⚪ P7',8:'⚪ P8',9:'⚪ P9'};
+function priorityClass(p){const n=parseInt(p);if(n===1)return'badge-p1';if(n===2)return'badge-p2';if(n===3||n===4)return'badge-p3';if(n===5)return'badge-p5';return'badge-p9';}
+function tagClass(val){if(!val)return'';return`tag tag-${val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}`;}
+function fmtNum(v){const n=parseFloat(v);if(isNaN(n)||n===0)return'—';return n>=1000?(n/1000).toFixed(1)+'k':n.toFixed(0);}
+function handleDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag');if(e.dataTransfer.files[0])parseCSV(e.dataTransfer.files[0]);}
+function handleFile(e){if(e.target.files[0])parseCSV(e.target.files[0]);}
+function parseCSV(file){const fName=file.name;Papa.parse(file,{header:true,skipEmptyLines:true,complete(r){allData=r.data;filtered=[...allData];init(fName);}});}
+function init(fileName){document.getElementById('upload-zone').style.display='none';document.getElementById('main').style.display='flex';document.getElementById('record-count').textContent=allData.length+' registros';
+  const meta=document.getElementById('file-meta');
+  document.getElementById('file-meta-name').textContent='📄 '+fileName;
+  const now=new Date();
+  document.getElementById('file-meta-date').textContent='Carregado em '+now.toLocaleDateString('pt-BR')+' às '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  meta.style.display='flex';const clusters=[...new Set(allData.map(r=>r.cluster).filter(Boolean))].sort();const sel=document.getElementById('f-cluster');clusters.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});updateKPIs(allData);updateSidebar(allData);applyFilters();}
+function updateKPIs(d){document.getElementById('kpi-all').textContent=d.length;document.getElementById('kpi-1').textContent=d.filter(r=>r.prioridade_operacional==1).length;document.getElementById('kpi-2').textContent=d.filter(r=>r.prioridade_operacional==2).length;document.getElementById('kpi-34').textContent=d.filter(r=>r.prioridade_operacional==3||r.prioridade_operacional==4).length;document.getElementById('kpi-5').textContent=d.filter(r=>r.prioridade_operacional==5).length;document.getElementById('kpi-9').textContent=d.filter(r=>parseInt(r.prioridade_operacional)>=6).length;}
+function updateSidebar(data){const counts={};data.forEach(r=>{if(r.cluster)counts[r.cluster]=(counts[r.cluster]||0)+1;});document.getElementById('cluster-list').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="cluster-chip ${activeCluster===c?'active':''}" onclick="filterByCluster('${c}')"><span class="cluster-name"><span class="dot" style="background:${CLUSTER_COLORS[c]||'#4a5568'}"></span>${c}</span><span class="cluster-count">${n}</span></div>`).join('');renderDist('dist-tamanho','Porte da Empresa',data,'tamanho',['GRANDE','MÉDIO','PEQUENO'],['#67a22d','#ffd166','#7d8fa3']);renderDist('dist-tendencia','Tendência de Volume',data,'tendencia',['CRESCENDO','ESTÁVEL','CAINDO'],['#06d6a0','#67a22d','#ff3b3b']);renderDist('dist-acesso','Acesso à Plataforma',data,'acesso',['ALTO','NORMAL','BAIXO'],['#06d6a0','#67a22d','#ff3b3b']);}
+function renderDist(id,label,data,col,vals,colors){const total=data.length||1,counts={};vals.forEach(v=>counts[v]=0);data.forEach(r=>{if(counts[r[col]]!==undefined)counts[r[col]]++;});document.getElementById(id).innerHTML=`<div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">${label}</div>${vals.map((v,i)=>`<div style="margin-bottom:5px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;color:var(--text2)">${v}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${colors[i]}">${counts[v]}</span></div><div style="height:3px;background:var(--border);border-radius:2px;"><div style="height:3px;background:${colors[i]};border-radius:2px;width:${Math.round(counts[v]/total*100)}%;opacity:.7;"></div></div></div>`).join('')}`;}
+function filterByPriority(p,el){activePriority=p;activeCluster='';document.querySelectorAll('.kpi').forEach(k=>k.classList.remove('active'));el.classList.add('active');applyFilters();}
+function filterByCluster(c){activeCluster=activeCluster===c?'':c;activePriority='all';document.querySelectorAll('.kpi').forEach(k=>k.classList.remove('active'));document.querySelector('.kpi[data-p="all"]').classList.add('active');applyFilters();}
+function applyFilters(){const s=document.getElementById('search').value.toLowerCase(),fT=document.getElementById('f-tamanho').value,fTe=document.getElementById('f-tendencia').value,fA=document.getElementById('f-acesso').value,fR=document.getElementById('f-recencia').value,fC=document.getElementById('f-cluster').value;filtered=allData.filter(r=>{if(s&&!r.empresa?.toLowerCase().includes(s))return false;if(fT&&r.tamanho!==fT)return false;if(fTe&&r.tendencia!==fTe)return false;if(fA&&r.acesso!==fA)return false;if(fR&&r.recencia!==fR)return false;if(fC&&r.cluster!==fC)return false;if(activeCluster&&r.cluster!==activeCluster)return false;if(activePriority!=='all'){const p=parseInt(r.prioridade_operacional);if(activePriority==='3'&&p!==3&&p!==4)return false;if(activePriority==='4'&&p<6)return false;if(activePriority!=='3'&&activePriority!=='4'&&r.prioridade_operacional!=activePriority)return false;}return true;});sortData();updateSidebar(filtered);renderTable();}
+function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}sortData();renderTable();document.getElementById('sort-info').textContent=`Ordenado por: ${col} ${sortDir===1?'↑':'↓'}`;document.querySelectorAll('thead th').forEach(th=>th.classList.remove('sorted'));}
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQFPU14gR6lFSK7YLZ2QdnQRt7axlgKipXW5Z_ZQ5ohOgB0-Wm-ic9xmqe8BgPSaqc/exec';
+
+function showToast(msg, type='', duration=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type?type:'');
+  void t.offsetWidth; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), duration);
+}
+
+function fetchFromDrive(){
+  const btn=document.getElementById('drive-btn');
+  btn.classList.add('loading');
+  btn.innerHTML='<span class="drive-icon">⟳</span> Buscando...';
+  showToast('Buscando CSV mais recente no Drive...', '', 10000);
+  const csvUrl = APPS_SCRIPT_URL + '?action=getCSV&token=' + encodeURIComponent(sessionToken || '');
+  fetch(csvUrl)
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.authRequired) { showLoginZone(); throw new Error('Sessão expirada. Faça login novamente.'); }
+      if(data.error) throw new Error(data.error);
+      // Parse CSV content
+      Papa.parse(data.csv, {
+        header:true, skipEmptyLines:true,
+        complete(result){
+          allData=result.data; filtered=[...allData];
+          // Update file meta
+          const updatedAt=new Date(data.updatedAt);
+          document.getElementById('file-meta-name').textContent='📄 '+data.filename;
+          document.getElementById('file-meta-date').textContent='Atualizado em '+updatedAt.toLocaleDateString('pt-BR')+' às '+updatedAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+          document.getElementById('file-meta').style.display='flex';
+          document.getElementById('record-count').textContent=allData.length+' registros';
+          // Reset cluster filter options
+          document.getElementById('f-cluster').innerHTML='<option value="">Todos os Clusters</option>';
+          const clusters=[...new Set(allData.map(r=>r.cluster).filter(Boolean))].sort();
+          clusters.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;document.getElementById('f-cluster').appendChild(o);});
+          // Show main panel
+          document.getElementById('upload-zone').style.display='none';
+          document.getElementById('main').style.display='flex';
+          updateKPIs(allData); updateSidebar(allData); applyFilters();
+          showToast('✓ '+data.filename+' carregado com sucesso', 'success');
+          btn.classList.remove('loading');
+          btn.innerHTML='<span class="drive-icon">⟳</span> Atualizar do Drive';
+        }
+      });
+    })
+    .catch(err=>{
+      showToast('Erro: '+err.message, 'error', 5000);
+      btn.classList.remove('loading');
+      btn.innerHTML='<span class="drive-icon">⟳</span> Atualizar do Drive';
+    });
+}
+
+function buildPhoneCell(empresa, telefones){
+  const phones=telefones.split(' | ').filter(Boolean);
+  if(phones.length===0) return '<span style="color:var(--text3)">—</span>';
+  const first=phones[0];
+  const rest=phones.length>1?` <button class="phones-btn" onclick="openPhoneModal(event,'${empresa.replace(/'/g,"\'")}','${telefones.replace(/'/g,"\'")}')">+${phones.length-1} mais</button>`:'';
+  return `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${first}</span>${rest}`;
+}
+function openPhoneModal(e, empresa, telefones){
+  e.stopPropagation();
+  const phones=telefones.split(' | ').filter(Boolean);
+  document.getElementById('phone-modal-empresa').textContent=empresa+' — '+phones.length+' telefone'+(phones.length>1?'s':'');
+  document.getElementById('phone-list').innerHTML=phones.map((p,i)=>`
+    <div class="phone-item">
+      <span>${p}</span>
+      <button class="phone-copy" onclick="copyPhone('${p}',this)">⎘ copiar</button>
+    </div>`).join('');
+  document.getElementById('phone-modal').classList.add('open');
+}
+function closePhoneModal(){document.getElementById('phone-modal').classList.remove('open');}
+function closePhoneModalOut(e){if(e.target===document.getElementById('phone-modal'))closePhoneModal();}
+function copyPhone(phone,btn){navigator.clipboard.writeText(phone).then(()=>{btn.textContent='✓ copiado';setTimeout(()=>btn.textContent='⎘ copiar',1500);});}
+function sortData(){filtered.sort((a,b)=>{const na=parseFloat(a[sortCol]),nb=parseFloat(b[sortCol]);if(!isNaN(na)&&!isNaN(nb))return(na-nb)*sortDir;return String(a[sortCol]||'').localeCompare(String(b[sortCol]||''))*sortDir;});}
+function renderTable(){const tbody=document.getElementById('table-body'),empty=document.getElementById('empty-msg');document.getElementById('showing-count').textContent=filtered.length;document.getElementById('total-count').textContent=allData.length;if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=filtered.map(r=>`<tr><td>${r.empresa||'—'}</td><td><span class="badge ${priorityClass(r.prioridade_operacional)}">${PRIORITY_LABELS[parseInt(r.prioridade_operacional)]||r.prioridade_operacional||'—'}</span></td><td><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:${CLUSTER_COLORS[r.cluster]||'#4a5568'}">${r.cluster||'—'}</span></td><td><span class="${tagClass(r.tamanho)}">${r.tamanho||'—'}</span></td><td><span class="${tagClass(r.tendencia)}">${r.tendencia||'—'}</span></td><td><span class="${tagClass(r.acesso)}">${r.acesso||'—'}</span></td><td><span class="${tagClass(r.recencia)}">${r.recencia||'—'}</span></td><td class="td-mono" style="${parseInt(r.dias_desde_ultima)>30?'color:var(--orange)':''}">${r.dias_desde_ultima||'—'} dias</td><td class="td-mono">${fmtNum(r.vol_medio_3m)} ton</td><td class="td-mono">${fmtNum(r.vol_medio_janela)} ton</td><td class="td-mono">${r.logins_janela||'—'}</td><td>${r.telefones ? buildPhoneCell(r.empresa, r.telefones) : '<span style="color:var(--text3)">—</span>'}</td></tr>`).join('');}
+function resetFilters(){document.getElementById('search').value='';['f-tamanho','f-tendencia','f-acesso','f-recencia','f-cluster'].forEach(id=>document.getElementById(id).value='');activePriority='all';activeCluster='';document.querySelectorAll('.kpi').forEach(k=>k.classList.remove('active'));document.querySelector('.kpi[data-p="all"]').classList.add('active');applyFilters();}
+function resetUpload(){allData=[];filtered=[];activePriority='all';activeCluster='';document.getElementById('main').style.display='none';document.getElementById('upload-zone').style.display=sessionToken?'flex':'none';if(!sessionToken){showLoginZone();}document.getElementById('record-count').textContent='';document.getElementById('file-input').value='';document.getElementById('f-cluster').innerHTML='<option value="">Todos os Clusters</option>';document.getElementById('file-meta').style.display='none';}
+</script>
+</body>
+</html>
